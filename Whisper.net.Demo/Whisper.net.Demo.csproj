@@ -10,9 +10,11 @@
 
 	<ItemGroup>
 	  <PackageReference Include="CommandLineParser" Version="2.9.1" />
+	  
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\Captura.NAudio\Captura.NAudio.csproj" />
 	  <ProjectReference Include="..\Whisper.net\Whisper.net.csproj" />
 	</ItemGroup>
 	

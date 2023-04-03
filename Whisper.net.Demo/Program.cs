@@ -1,16 +1,90 @@
 // Licensed under the MIT license: https://opensource.org/licenses/MIT
 
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
+//using System;
+//using System.IO;
+//using System.Threading;
+//using System.Threading.Tasks;
+using Captura.Audio;
+using Captura;
+using Captura.Audio;
+using Captura.Video;
 using CommandLine;
+using NAudio.CoreAudioApi;
 using Whisper.net;
 using Whisper.net.Ggml;
 using Whisper.net.Wave;
 
-await Parser.Default.ParseArguments<Options>(args)
-    .WithParsedAsync(Demo);
+IAudioSource audioSource = new NAudioSource();
+
+IAudioItem microphone, speaker = null!;
+
+var microphones = audioSource
+                        .Microphones
+                        .ToArray();
+microphone = microphones[0];
+
+var speakers = audioSource
+                        .Speakers
+                        .ToArray();
+speaker = speakers[0];
+
+var audioProviders =
+                    new[]
+                    {
+                          audioSource.GetAudioProvider(microphone, speaker)
+                        //, audioSource.GetAudioProvider(null, speaker)
+                    }
+                    .Where(M => M != null)
+                    .ToArray();
+var noVideoItem = new NoVideoItem(new WaveItem());
+
+var recorders =
+            audioProviders
+                        .Select
+                            (
+                                (M, Index) =>
+                                {
+                                    return
+                                        GetAudioRecorder(noVideoItem, M, filePath);
+                                }
+                            )
+                        .ToArray();
+
+
+IRecorder recorder;
+if (recorders.Length > 1)
+{
+    recorder = new MultiRecorder(recorders);
+}
+else
+{
+    recorder = recorders[0];
+}
+
+var t = new Thread
+        (
+            recorder.Start
+        );
+
+        t.Start();
+
+var input = string.Empty;
+
+while ("q" != (input = Console.ReadLine()))
+{
+
+}
+recorder.Stop();
+
+//return;
+await
+    Parser
+        .Default
+        .ParseArguments
+                <Options>
+            (args)
+        .WithParsedAsync
+            (Demo);
 
 async Task Demo(Options opt)
 
@@ -82,6 +156,32 @@ async Task FullDetection(Options opt)
         Console.WriteLine($"New Segment: {segment.Start} ==> {segment.End} : {segment.Text}");
     }
 }
+
+
+
+IRecorder GetAudioRecorder
+                        (
+                            NoVideoItem AudioWriter
+                            , IAudioProvider AudioProvider
+                            , string AudioFileName = null
+                        )
+{
+    var audioFileWriter =
+            AudioWriter
+                    .AudioWriterItem
+                    .GetAudioFileWriter
+                        (
+                            AudioFileName
+                            , AudioProvider?.WaveFormat!
+                            , 80
+                        );
+    return new AudioRecorder(audioFileWriter, AudioProvider!);
+}
+
+
+
+
+
 
 public class Options
 {
