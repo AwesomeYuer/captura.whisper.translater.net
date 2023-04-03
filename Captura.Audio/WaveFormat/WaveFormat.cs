@@ -11,7 +11,7 @@ namespace Captura.Audio
         /// <summary>
         /// Creates a new PCM 44.1Khz stereo 16 bit format
         /// </summary>
-        public WaveFormat() : this(44100, 16, 2) { }
+        public WaveFormat() : this(16000, 16, 2) { }
 
         /// <summary>
         /// Creates a new 16 bit wave format with the specified sample

@@ -46,7 +46,7 @@ var recorders =
                                 (M, Index) =>
                                 {
                                     return
-                                        GetAudioRecorder(null, M );
+                                        GetAudioRecorder(noVideoItem!, M );
                                 }
                             )
                         .ToArray();
@@ -77,14 +77,14 @@ while ("q" != (input = Console.ReadLine()))
 }
 recorder.Stop();
 
-stream.Position = 0;
-var filePath = @"d:\ccc.wav";
-File.Delete(filePath);
-var fileStream = File.Create(filePath);
+//stream.Position = 0;
+//var filePath = @"d:\ccc.wav";
+//File.Delete(filePath);
+//var fileStream = File.Create(filePath);
 
-stream.CopyTo(fileStream);
-fileStream.Close();
-stream.Position = 0;
+//stream.CopyTo(fileStream);
+//fileStream.Close();
+//stream.Position = 0;
 //return;
 var options = Parser
                 .Default
@@ -174,7 +174,7 @@ async Task FullDetection(Options opt)
 IRecorder GetAudioRecorder(NoVideoItem AudioWriter, IAudioProvider AudioProvider, string AudioFileName = null)
 {
     var audioFileWriter = AudioWriter.AudioWriterItem.GetAudioFileWriter(
-        "CurrentFileName",
+        @"d:\eeee.wav",
         AudioProvider?.WaveFormat,
         80);
 
