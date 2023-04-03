@@ -38,6 +38,7 @@ var audioProviders =
                     .ToArray();
 var noVideoItem = new NoVideoItem(new WaveItem());
 
+Stream stream = new MemoryStream();
 var recorders =
             audioProviders
                         .Select
@@ -45,7 +46,7 @@ var recorders =
                                 (M, Index) =>
                                 {
                                     return
-                                        GetAudioRecorder(noVideoItem, M, filePath);
+                                        GetAudioRecorder(null, M );
                                 }
                             )
                         .ToArray();
@@ -76,18 +77,27 @@ while ("q" != (input = Console.ReadLine()))
 }
 recorder.Stop();
 
+stream.Position = 0;
+var filePath = @"d:\ccc.wav";
+File.Delete(filePath);
+var fileStream = File.Create(filePath);
+
+stream.CopyTo(fileStream);
+fileStream.Close();
+stream.Position = 0;
 //return;
-await
-    Parser
-        .Default
-        .ParseArguments
-                <Options>
-            (args)
-        .WithParsedAsync
+var options = Parser
+                .Default
+                .ParseArguments
+                        <Options>
+                    (args);
+stream.Position = 0;
+options.Value.InputWavStream = stream;
+
+await options.WithParsedAsync
             (Demo);
 
 async Task Demo(Options opt)
-
 {
     if (!File.Exists(opt.ModelName))
     {
@@ -124,9 +134,11 @@ void LanguageIdentification(Options opt)
 
     using var processor = builder.Build();
 
-    using var fileStream = File.OpenRead(opt.FileName!);
+    //using var fileStream = opt.InputWavStream;
+        //File.OpenRead(opt.FileName!)
+      //  ;
 
-    var wave = new WaveParser(fileStream);
+    var wave = new WaveParser(opt.InputWavStream!);
 
     var samples = wave.GetAvgSamples();
 
@@ -149,9 +161,9 @@ async Task FullDetection(Options opt)
 
     using var processor = builder.Build();
 
-    using var fileStream = File.OpenRead(opt.FileName!);
+    //using var fileStream = File.OpenRead(opt.FileName!);
 
-    await foreach (var segment in processor.ProcessAsync(fileStream, CancellationToken.None))
+    await foreach (var segment in processor.ProcessAsync(opt.InputWavStream!, CancellationToken.None))
     {
         Console.WriteLine($"New Segment: {segment.Start} ==> {segment.End} : {segment.Text}");
     }
@@ -159,25 +171,15 @@ async Task FullDetection(Options opt)
 
 
 
-IRecorder GetAudioRecorder
-                        (
-                            NoVideoItem AudioWriter
-                            , IAudioProvider AudioProvider
-                            , string AudioFileName = null
-                        )
+IRecorder GetAudioRecorder(NoVideoItem AudioWriter, IAudioProvider AudioProvider, string AudioFileName = null)
 {
-    var audioFileWriter =
-            AudioWriter
-                    .AudioWriterItem
-                    .GetAudioFileWriter
-                        (
-                            AudioFileName
-                            , AudioProvider?.WaveFormat!
-                            , 80
-                        );
-    return new AudioRecorder(audioFileWriter, AudioProvider!);
-}
+    var audioFileWriter = AudioWriter.AudioWriterItem.GetAudioFileWriter(
+        "CurrentFileName",
+        AudioProvider?.WaveFormat,
+        80);
 
+    return new AudioRecorder(audioFileWriter, AudioProvider);
+}
 
 
 
@@ -199,4 +201,7 @@ public class Options
 
     [Option('g', "ggml", Required = false, HelpText = "Ggml Model type to download (if not exists)", Default = GgmlType.Base)]
     public GgmlType ModelType { get; set; }
+
+
+    public Stream? InputWavStream { get; set; }
 }

@@ -1,95 +1,95 @@
-// Licensed under the MIT license: https://opensource.org/licenses/MIT
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Captura.Audio;
-
-public class AudioRecorder : IRecorder
+namespace Captura.Audio
 {
-    IAudioFileWriter _audioWriter;
-    IAudioProvider _audioProvider;
-
-    readonly ManualResetEvent
-          _continueEvent =
-                    new ManualResetEvent(false)
-        , _stopEvent =
-                    new ManualResetEvent(false);
-
-    byte[] _buffer;
-    const int ReadInterval = 200;
-    readonly Task _loopTask;
-
-    public AudioRecorder(IAudioFileWriter AudioWriter, IAudioProvider AudioProvider)
+    public class AudioRecorder : IRecorder
     {
-        _audioWriter = AudioWriter ?? throw new ArgumentNullException(nameof(AudioWriter));
-        _audioProvider = AudioProvider ?? throw new ArgumentNullException(nameof(AudioProvider));
+        IAudioFileWriter _audioWriter;
+        IAudioProvider _audioProvider;
 
-        var wf = _audioProvider.WaveFormat;
+        readonly ManualResetEvent _continueEvent = new ManualResetEvent(false),
+            _stopEvent = new ManualResetEvent(false);
 
-        var bufferSize = (int)
-        (
-            (ReadInterval / 1000.0)
-            * wf.SampleRate
-            * wf.Channels
-            * (wf.BitsPerSample / 8.0)
-        );
+        byte[] _buffer;
+        const int ReadInterval = 200;
+        readonly Task _loopTask;
 
-        _buffer = new byte[bufferSize];
-
-        _loopTask = Task.Factory.StartNew(Loop, TaskCreationOptions.LongRunning);
-    }
-
-    public void Dispose()
-    {
-        _continueEvent.Set();
-        _stopEvent.Set();
-
-        _loopTask.Wait();
-
-        _buffer = null!;
-
-        _audioWriter.Dispose();
-        _audioWriter = null!;
-
-        _audioProvider.Dispose();
-        _audioProvider = null!;
-    }
-
-    public void Start()
-    {
-        _audioProvider.Start();
-
-        _continueEvent.Set();
-    }
-
-    public void Stop()
-    {
-        _continueEvent.Reset();
-
-        _audioProvider.Stop();
-    }
-
-    void Loop()
-    {
-        bool CanContinue()
+        public AudioRecorder(IAudioFileWriter AudioWriter, IAudioProvider AudioProvider)
         {
-            try
+            _audioWriter = AudioWriter ?? throw new ArgumentNullException(nameof(AudioWriter));
+            _audioProvider = AudioProvider ?? throw new ArgumentNullException(nameof(AudioProvider));
+
+            var wf = _audioProvider.WaveFormat;
+
+            var bufferSize = (int)
+            (
+                (ReadInterval / 1000.0)
+                * wf.SampleRate
+                * wf.Channels
+                * (wf.BitsPerSample / 8.0)
+            );
+
+            _buffer = new byte[bufferSize];
+
+            _loopTask = Task.Factory.StartNew(Loop, TaskCreationOptions.LongRunning);
+        }
+
+        public void Dispose()
+        {
+            _continueEvent.Set();
+            _stopEvent.Set();
+
+            _loopTask.Wait();
+
+            _buffer = null;
+
+            _audioWriter.Dispose();
+            _audioWriter = null;
+
+            _audioProvider.Dispose();
+            _audioProvider = null;
+        }
+
+        public void Start()
+        {
+            _audioProvider.Start();
+
+            _continueEvent.Set();
+        }
+
+        public void Stop()
+        {
+            _continueEvent.Reset();
+
+            _audioProvider.Stop();
+        }
+
+        void Loop()
+        {
+            bool CanContinue()
             {
-                return _continueEvent.WaitOne() && !_stopEvent.WaitOne(0);
+                try
+                {
+                    return _continueEvent.WaitOne() && !_stopEvent.WaitOne(0);
+                }
+                catch (ObjectDisposedException)
+                {
+                    return false;
+                }
             }
-            catch (ObjectDisposedException)
+
+            while (CanContinue())
             {
-                return false;
+                var read = _audioProvider.Read(_buffer, 0, _buffer.Length);
+
+                _audioWriter.Write(_buffer, 0, read);
+
+                Thread.Sleep(ReadInterval);
             }
         }
 
-        while (CanContinue())
-        {
-            var read = _audioProvider.Read(_buffer, 0, _buffer.Length);
-
-            _audioWriter.Write(_buffer, 0, read);
-
-            Thread.Sleep(ReadInterval);
-        }
+        public event Action<Exception> ErrorOccurred;
     }
-
-    public event Action<Exception>? ErrorOccurred;
 }

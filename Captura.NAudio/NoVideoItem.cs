@@ -5,7 +5,7 @@ namespace Captura.Video
     /// <summary>
     /// Holds codecs for audio-alone capture.
     /// </summary>
-    public class NoVideoItem //: IVideoItem
+    public class NoVideoItem : IVideoItem
     {
         public IAudioWriterItem AudioWriterItem { get; }
 
