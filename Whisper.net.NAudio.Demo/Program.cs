@@ -24,16 +24,16 @@ IWaveIn recorder =new WaveInEvent()
 };
 
 
-recorder = new WasapiLoopbackCapture
-{
-    WaveFormat = new WaveFormat(16000, 16, 2)
-   ,
-   // DeviceNumber = 1,
-   //,
-   // BufferMilliseconds = 5 * 1000
-   // ,
-   // CaptureState = NAudio.CoreAudioApi.CaptureState.
-};
+//recorder = new WasapiLoopbackCapture
+//{
+//    WaveFormat = new WaveFormat(16000, 16, 2)
+//   ,
+//   // DeviceNumber = 1,
+//   //,
+//   // BufferMilliseconds = 5 * 1000
+//   // ,
+//   // CaptureState = NAudio.CoreAudioApi.CaptureState.
+//};
 recorder.StartRecording();
 
 var bytes = new byte[recorder.WaveFormat.AverageBytesPerSecond * 1];

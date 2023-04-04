@@ -1,5 +1,11 @@
 {
+
   "profiles": {
+    "Demo Chinese Detected": {
+      "commandName": "Project",
+      "nativeDebugging": true,
+      "commandLineArgs": "-f chinese2.wav"
+    },
     "Demo Romanian Detected": {
       "commandName": "Project",
       "nativeDebugging": true,

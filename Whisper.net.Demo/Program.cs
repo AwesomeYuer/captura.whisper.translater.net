@@ -9,8 +9,13 @@ using Whisper.net;
 using Whisper.net.Ggml;
 using Whisper.net.Wave;
 
-await Parser.Default.ParseArguments<Options>(args)
-    .WithParsedAsync(Demo);
+
+
+var options = Parser.Default.ParseArguments<Options>(args);
+
+options.Value.Command = "translate";
+await options
+        .WithParsedAsync(Demo);
 
 async Task Demo(Options opt)
 
