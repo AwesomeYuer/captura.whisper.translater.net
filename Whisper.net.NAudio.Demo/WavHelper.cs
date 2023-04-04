@@ -101,7 +101,7 @@ public static class WavHelper
         binaryWriter.Seek(40, SeekOrigin.Begin);
         binaryWriter.Write(samplesCount);
 
-        using var copyOfStream = new MemoryStream();
+        var copyOfStream = new MemoryStream();
         stream.Position = 0;
         stream.CopyTo(copyOfStream);
 

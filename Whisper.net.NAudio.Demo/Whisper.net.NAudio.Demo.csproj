@@ -2,12 +2,20 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFrameworks>net7.0;net472</TargetFrameworks>
-		<LangVersion>10</LangVersion>
+		<TargetFramework>net6.0-windows</TargetFramework>
+		<LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="Program111.cs.txt" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <PackageReference Include="CommandLineParser" Version="2.9.1" />
+	  <PackageReference Include="NAudio" Version="2.1.0" />
+	  
 	</ItemGroup>
 
 	<ItemGroup>

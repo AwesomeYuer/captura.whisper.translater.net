@@ -1,0 +1,29 @@
+{
+  "profiles": {
+    "Demo Romanian Detected": {
+      "commandName": "Project",
+      "nativeDebugging": true,
+      "commandLineArgs": "-f romana.wav"
+    },
+    "Demo Romanian Provided Base": {
+      "commandName": "Project",
+      "nativeDebugging": true,
+      "commandLineArgs": "-f romana.wav -l ro"
+    },
+    "Demo Romanian Provided Medium": {
+      "commandName": "Project",
+      "nativeDebugging": true,
+      "commandLineArgs": "-f romana.wav -g Medium -m medium.bin -l ro"
+    },
+    "Demo English Detected": {
+      "commandName": "Project",
+      "nativeDebugging": true,
+      "commandLineArgs": "-f kennedy.wav"
+    },
+    "Demo English TinyEn Provided": {
+      "commandName": "Project",
+      "nativeDebugging": true,
+      "commandLineArgs": "-f kennedy.wav -g TinyEn -m tiny-en.bin -l en"
+    }
+  }
+}
