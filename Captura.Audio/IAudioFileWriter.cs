@@ -16,5 +16,8 @@ namespace Captura.Audio
         /// Writes all buffered data to file.
         /// </summary>
         void Flush();
+
+
+        
     }
 }

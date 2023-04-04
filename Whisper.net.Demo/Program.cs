@@ -1,101 +1,55 @@
 // Licensed under the MIT license: https://opensource.org/licenses/MIT
 
-//using System;
-//using System.IO;
-//using System.Threading;
-//using System.Threading.Tasks;
-using Captura.Audio;
-using Captura;
-using Captura.Audio;
-using Captura.Video;
 using CommandLine;
-using NAudio.CoreAudioApi;
+using NAudio.Wave;
 using Whisper.net;
+using Whisper.net.Demo;
 using Whisper.net.Ggml;
 using Whisper.net.Wave;
 
-IAudioSource audioSource = new NAudioSource();
-
-IAudioItem microphone, speaker = null!;
-
-var microphones = audioSource
-                        .Microphones
-                        .ToArray();
-microphone = microphones[0];
-
-var speakers = audioSource
-                        .Speakers
-                        .ToArray();
-speaker = speakers[0];
-
-var audioProviders =
-                    new[]
-                    {
-                          audioSource.GetAudioProvider(microphone, speaker)
-                        //, audioSource.GetAudioProvider(null, speaker)
-                    }
-                    .Where(M => M != null)
-                    .ToArray();
-var noVideoItem = new NoVideoItem(new WaveItem());
-
-Stream stream = new MemoryStream();
-var recorders =
-            audioProviders
-                        .Select
-                            (
-                                (M, Index) =>
-                                {
-                                    return
-                                        GetAudioRecorder(noVideoItem!, M );
-                                }
-                            )
-                        .ToArray();
-
-
-IRecorder recorder;
-if (recorders.Length > 1)
-{
-    recorder = new MultiRecorder(recorders);
-}
-else
-{
-    recorder = recorders[0];
-}
-
-var t = new Thread
-        (
-            recorder.Start
-        );
-
-        t.Start();
-
-var input = string.Empty;
-
-while ("q" != (input = Console.ReadLine()))
-{
-
-}
-recorder.Stop();
-
-//stream.Position = 0;
-//var filePath = @"d:\ccc.wav";
-//File.Delete(filePath);
-//var fileStream = File.Create(filePath);
-
-//stream.CopyTo(fileStream);
-//fileStream.Close();
-//stream.Position = 0;
-//return;
 var options = Parser
                 .Default
                 .ParseArguments
                         <Options>
                     (args);
-stream.Position = 0;
-options.Value.InputWavStream = stream;
 
-await options.WithParsedAsync
-            (Demo);
+var waveIn =
+    new WaveInEvent()
+    //new WasapiLoopbackCapture
+{
+   WaveFormat = new WaveFormat(16000, 16, 2)
+   //, DeviceNumber = 1,
+   , BufferMilliseconds = 5 * 1000
+   //, CaptureState = NAudio.CoreAudioApi.CaptureState.
+};
+waveIn.StartRecording();
+
+waveIn.DataAvailable += (s, e) =>
+{
+    var buffer =
+                new ArraySegment<byte>
+                            (e.Buffer, 0, e.BytesRecorded)
+                        .ToArray();
+    var stream = WavHelper
+                        .WriteStream
+                                (
+                                    buffer.ToArray()
+                                    , waveIn.WaveFormat.SampleRate
+                                    , (short) waveIn.WaveFormat.BitsPerSample
+                                    , (short) waveIn.WaveFormat.Channels
+                                );
+    options.Value.Command = "translate";
+    options.Value.InputWavStream = stream;
+    Demo(options.Value).Wait();
+};
+
+var input = string.Empty;
+while ("q" != (input = Console.ReadLine()))
+{
+    waveIn.StopRecording();
+    waveIn.Dispose();
+}
+Console.ReadLine();
 
 async Task Demo(Options opt)
 {
@@ -133,10 +87,10 @@ void LanguageIdentification(Options opt)
        .WithLanguage(opt.Language!);
 
     using var processor = builder.Build();
-
-    //using var fileStream = opt.InputWavStream;
-        //File.OpenRead(opt.FileName!)
-      //  ;
+    opt.FileName = @"d:\eeee.wav";
+    using var fileStream = //opt.InputWavStream;
+    File.OpenRead(opt.FileName!)
+      ;
 
     var wave = new WaveParser(opt.InputWavStream!);
 
@@ -151,8 +105,13 @@ async Task FullDetection(Options opt)
     // Same factory can be used by multiple task to create processors.
     using var factory = WhisperFactory.FromPath(opt.ModelName!);
 
-    var builder = factory.CreateBuilder()
-        .WithLanguage(opt.Language!);
+    var builder = factory
+                    .CreateBuilder()
+                    .WithLanguage
+                        (
+                            opt.Language!
+                            //"zh"
+                        );
 
     if (opt.Command == "translate")
     {
@@ -161,29 +120,14 @@ async Task FullDetection(Options opt)
 
     using var processor = builder.Build();
 
-    //using var fileStream = File.OpenRead(opt.FileName!);
+    opt.InputWavStream!.Position = 0;
 
-    await foreach (var segment in processor.ProcessAsync(opt.InputWavStream!, CancellationToken.None))
+    var segments = processor.ProcessAsync(opt.InputWavStream, CancellationToken.None);
+    await foreach (var segment in segments)
     {
         Console.WriteLine($"New Segment: {segment.Start} ==> {segment.End} : {segment.Text}");
     }
 }
-
-
-
-IRecorder GetAudioRecorder(NoVideoItem AudioWriter, IAudioProvider AudioProvider, string AudioFileName = null)
-{
-    var audioFileWriter = AudioWriter.AudioWriterItem.GetAudioFileWriter(
-        @"d:\eeee.wav",
-        AudioProvider?.WaveFormat,
-        80);
-
-    return new AudioRecorder(audioFileWriter, AudioProvider);
-}
-
-
-
-
 
 public class Options
 {
@@ -202,6 +146,6 @@ public class Options
     [Option('g', "ggml", Required = false, HelpText = "Ggml Model type to download (if not exists)", Default = GgmlType.Base)]
     public GgmlType ModelType { get; set; }
 
-
+    public byte[]? InputWavBuffer { get; set; }
     public Stream? InputWavStream { get; set; }
 }

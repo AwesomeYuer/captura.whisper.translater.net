@@ -138,8 +138,8 @@ namespace Captura.Audio
         /// </summary>
         public void Dispose()
         {
-            using (_writer)
-                Flush();
+            //using (_writer)
+            //    Flush();
         }
     }
 }

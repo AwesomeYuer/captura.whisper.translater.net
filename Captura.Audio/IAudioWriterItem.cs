@@ -7,5 +7,7 @@ namespace Captura.Audio
         string Extension { get; }
 
         IAudioFileWriter GetAudioFileWriter(string FileName, WaveFormat Wf, int AudioQuality);
+
+        IAudioFileWriter GetAudioFileWriter(Stream stream, WaveFormat Wf, int AudioQuality);
     }
 }

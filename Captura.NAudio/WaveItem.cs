@@ -10,5 +10,10 @@ namespace Captura.Audio
         {
             return new AudioFileWriter(FileName, Wf);
         }
+
+        public IAudioFileWriter GetAudioFileWriter(Stream stream, WaveFormat Wf, int AudioQuality)
+        {
+            return new AudioFileWriter(stream, Wf);
+        }
     }
 }

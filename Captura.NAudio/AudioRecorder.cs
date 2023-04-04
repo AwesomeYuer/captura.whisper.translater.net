@@ -45,8 +45,10 @@ namespace Captura.Audio
 
             _buffer = null;
 
-            _audioWriter.Dispose();
-            _audioWriter = null;
+            //_audioWriter.s
+
+            //_audioWriter.Dispose();
+            //_audioWriter = null;
 
             _audioProvider.Dispose();
             _audioProvider = null;

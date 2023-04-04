@@ -24,7 +24,9 @@ public sealed class WaveParser
             Initialize();
         }
 
-        return (int)(dataChunkSize / 2 / channels);
+        var x = (dataChunkSize / 2.0 / channels);
+
+         return (int) x;
     }
 
     /// <summary>
@@ -50,7 +52,7 @@ public sealed class WaveParser
 
         var sampleIndex = 0;
         int bytesRead;
-        waveStream.Position = 0;
+
         do
         {
             bytesRead = await waveStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
@@ -64,12 +66,8 @@ public sealed class WaveParser
                     sampleSum += BitConverter.ToInt16(buffer, i);
                     i += 2;
                 }
-                
-                sampleIndex++;
-                if (sampleIndex < samples.Length)
-                {
-                    samples[sampleIndex] = sampleSum / (float)channels / 32768.0f;
-                }
+
+                samples[sampleIndex++] = sampleSum / (float)channels / 32768.0f;
             }
         } while (bytesRead > 0);
 
